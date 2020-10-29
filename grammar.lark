@@ -1,4 +1,7 @@
-start: orexpr
+start: implyexpr
+
+implyexpr: orexpr "->" implyexpr -> imply
+    | orexpr
 
 orexpr: orexpr ("|" | "or") andexpr -> or
     | andexpr
@@ -8,7 +11,7 @@ andexpr: andexpr ("&" | "and") notexpr -> and
 
 notexpr: ("!" | "not") notexpr -> not
     | variable
-    | "(" orexpr ")"   -> parentesis // when expanding parentesis needs to point to the lowest priority
+    | "(" implyexpr ")"   -> parentesis // when expanding parentesis needs to point to the lowest priority
 
 variable: VARIABLE
 VARIABLE: /[a-z]/

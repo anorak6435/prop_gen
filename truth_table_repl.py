@@ -62,6 +62,20 @@ class OP_OR:
     def __repr__(self):
         return f"({self.left} ∨ {self.right})"
 
+class OP_IMPLY:
+    def __init__(self, left, right):
+        self.left = left
+        self.right = right
+
+    def __eq__(self, other):
+        return repr(self) == repr(other)
+
+    def __repr__(self):
+        return f"({self.left} -> {self.right})"
+
+    def execute(self, state):
+        return not self.left.execute(state) or self.right.execute(state)
+
 class OP_PAREN:
     def __init__(self, value):
         self.value = value
@@ -105,6 +119,8 @@ class get_operations:
                 return get_operations.visit(tree.children[0])
             if tree.data == "notexpr":
                 return get_operations.visit(tree.children[0])
+            if tree.data == "implyexpr":
+                return get_operations.visit(tree.children[0])
             # return the value of the variable to the last operation
             if tree.data == "variable":
                 opvar = OP_VAR(tree.children[0].value)
@@ -127,6 +143,11 @@ class get_operations:
                 if not opor in get_operations.operations:
                     get_operations.operations.append(opor)
                 return opor
+            if tree.data == "imply":
+                opimply = OP_IMPLY(get_operations.visit(tree.children[0]), get_operations.visit(tree.children[1]))
+                if not opimply in get_operations.operations:
+                    get_operations.operations.append(opimply)
+                return opimply
             if tree.data == "parentesis":
                 paren = OP_PAREN(get_operations.visit(tree.children[0]))
                 return paren
