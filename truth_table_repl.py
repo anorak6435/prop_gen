@@ -1,6 +1,7 @@
 from lark import Lark, Visitor, Tree, Token
 from lark.visitors import Interpreter
 import sys
+import TreeNodes
 DEBUG = False
 
 # get the grammar
@@ -19,102 +20,6 @@ def list_all_operations(ast):
         print("top level operations:")
         print(ops)
     return get_operations.operations
-    
-# the operations
-class OP_NOT:
-    def __init__(self, value):
-        self.value = value
-
-    def __eq__(self, other):
-        return repr(self) == repr(other)
-
-    def execute(self, state):
-        return not self.value.execute(state)
-    
-    def __repr__(self):
-        return f"(¬{self.value})"
-
-class OP_AND:
-    def __init__(self, left, right):
-        self.left = left
-        self.right = right
-
-    def __eq__(self, other):
-        return repr(self) == repr(other)
-
-    def execute(self, state):
-        return self.left.execute(state) and self.right.execute(state)
-    
-    def __repr__(self):
-        return f"({self.left} ∧ {self.right})"
-
-class OP_OR:
-    def __init__(self, left, right):
-        self.left = left
-        self.right = right
-
-    def __eq__(self, other):
-        return repr(self) == repr(other)
-
-    def execute(self, state):
-        return self.left.execute(state) or self.right.execute(state)
-    
-    def __repr__(self):
-        return f"({self.left} ∨ {self.right})"
-
-class OP_IMPLY:
-    def __init__(self, left, right):
-        self.left = left
-        self.right = right
-
-    def __eq__(self, other):
-        return repr(self) == repr(other)
-
-    def __repr__(self):
-        return f"({self.left} -> {self.right})"
-
-    def execute(self, state):
-        return not self.left.execute(state) or self.right.execute(state)
-
-class OP_BICOND:
-    def __init__(self, left, right):
-        self.left = left
-        self.right = right
-    
-    def __eq__(self, other):
-        return repr(self) == repr(other)
-
-    def __repr__(self):
-        return f"({self.left} <=> {self.right})"
-    
-    def execute(self, state):
-        a = self.left.execute(state)
-        b = self.right.execute(state)
-        return a and b or not a and not b
-
-class OP_PAREN:
-    def __init__(self, value):
-        self.value = value
-    
-    def execute(self, state):
-        return self.value.execute(state)
-
-    def __repr__(self):
-        return f"({self.value})"
-
-# represent the variables I find
-class OP_VAR:
-    def __init__(self, value):
-        self.value = value
-
-    def __eq__(self, other):
-        return repr(self) == repr(other)
-    
-    def execute(self, state):
-        return state[repr(self)]
-
-    def __repr__(self):
-        return self.value
 
 # get the operations from the ast
 class get_operations:
@@ -141,42 +46,42 @@ class get_operations:
                 return get_operations.visit(tree.children[0])
             # return the value of the variable to the last operation
             if tree.data == "variable":
-                opvar = OP_VAR(tree.children[0].value)
+                opvar = TreeNodes.OP_VAR(tree.children[0].value)
                 if not opvar in get_operations.operations:
                     get_operations.operations.append(opvar)
                 return opvar
             # the operations
             if tree.data == "not":
-                opnot = OP_NOT(get_operations.visit(tree.children[0]))
+                opnot = TreeNodes.OP_NOT(get_operations.visit(tree.children[0]))
                 if not opnot in get_operations.operations:
                     get_operations.operations.append(opnot)
                 return opnot
             if tree.data == "and":
-                opand = OP_AND(get_operations.visit(tree.children[0]), get_operations.visit(tree.children[1]))
+                opand = TreeNodes.OP_AND(get_operations.visit(tree.children[0]), get_operations.visit(tree.children[1]))
                 if not opand in get_operations.operations:
                     get_operations.operations.append(opand)
                 return opand
             if tree.data == "or":
-                opor = OP_OR(get_operations.visit(tree.children[0]), get_operations.visit(tree.children[1]))
+                opor = TreeNodes.OP_OR(get_operations.visit(tree.children[0]), get_operations.visit(tree.children[1]))
                 if not opor in get_operations.operations:
                     get_operations.operations.append(opor)
                 return opor
             if tree.data == "bicondition":
-                bicondop = OP_BICOND(get_operations.visit(tree.children[0]), get_operations.visit(tree.children[1]))
+                bicondop = TreeNodes.OP_BICOND(get_operations.visit(tree.children[0]), get_operations.visit(tree.children[1]))
                 if not bicondop in get_operations.operations:
                     get_operations.operations.append(bicondop)
                 return bicondop
             if tree.data == "imply":
-                opimply = OP_IMPLY(get_operations.visit(tree.children[0]), get_operations.visit(tree.children[1]))
+                opimply = TreeNodes.OP_IMPLY(get_operations.visit(tree.children[0]), get_operations.visit(tree.children[1]))
                 if not opimply in get_operations.operations:
                     get_operations.operations.append(opimply)
                 return opimply
             if tree.data == "parentesis":
-                paren = OP_PAREN(get_operations.visit(tree.children[0]))
+                paren = TreeNodes.OP_PAREN(get_operations.visit(tree.children[0]))
                 return paren
 
 def filter_variable_type(op):
-    return isinstance(op, OP_VAR)
+    return isinstance(op, TreeNodes.OP_VAR)
 
 # class that represents the table
 class Table:
