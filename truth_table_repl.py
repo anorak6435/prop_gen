@@ -76,6 +76,22 @@ class OP_IMPLY:
     def execute(self, state):
         return not self.left.execute(state) or self.right.execute(state)
 
+class OP_BICOND:
+    def __init__(self, left, right):
+        self.left = left
+        self.right = right
+    
+    def __eq__(self, other):
+        return repr(self) == repr(other)
+
+    def __repr__(self):
+        return f"({self.left} <=> {self.right})"
+    
+    def execute(self, state):
+        a = self.left.execute(state)
+        b = self.right.execute(state)
+        return a and b or not a and not b
+
 class OP_PAREN:
     def __init__(self, value):
         self.value = value
@@ -121,6 +137,8 @@ class get_operations:
                 return get_operations.visit(tree.children[0])
             if tree.data == "implyexpr":
                 return get_operations.visit(tree.children[0])
+            if tree.data == "bicondexpr":
+                return get_operations.visit(tree.children[0])
             # return the value of the variable to the last operation
             if tree.data == "variable":
                 opvar = OP_VAR(tree.children[0].value)
@@ -143,6 +161,11 @@ class get_operations:
                 if not opor in get_operations.operations:
                     get_operations.operations.append(opor)
                 return opor
+            if tree.data == "bicondition":
+                bicondop = OP_BICOND(get_operations.visit(tree.children[0]), get_operations.visit(tree.children[1]))
+                if not bicondop in get_operations.operations:
+                    get_operations.operations.append(bicondop)
+                return bicondop
             if tree.data == "imply":
                 opimply = OP_IMPLY(get_operations.visit(tree.children[0]), get_operations.visit(tree.children[1]))
                 if not opimply in get_operations.operations:

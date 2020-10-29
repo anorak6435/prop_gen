@@ -1,6 +1,9 @@
-start: implyexpr
+start: bicondexpr
 
-implyexpr: orexpr "->" implyexpr -> imply
+bicondexpr: implyexpr ("<->" | "<=>") bicondexpr -> bicondition
+    | implyexpr
+
+implyexpr: orexpr ("->" | "=>") implyexpr -> imply
     | orexpr
 
 orexpr: orexpr ("|" | "or") andexpr -> or
@@ -11,7 +14,7 @@ andexpr: andexpr ("&" | "and") notexpr -> and
 
 notexpr: ("!" | "not") notexpr -> not
     | variable
-    | "(" implyexpr ")"   -> parentesis // when expanding parentesis needs to point to the lowest priority
+    | "(" bicondexpr ")"   -> parentesis // when expanding parentesis needs to point to the lowest priority
 
 variable: VARIABLE
 VARIABLE: /[a-z]/
